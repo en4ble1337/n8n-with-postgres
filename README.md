@@ -90,6 +90,17 @@ Open your browser and navigate to:
 - Local: `http://10.1.20.63:5678`
 - Or: `http://localhost:5678`
 
+### 5. Add Postgress plugin in n8n with credentials:
+Host: postgres (this is the Docker service name for internal container communication)
+
+Database: n8n (as specified by POSTGRES_DB=n8n in your .env file)
+
+User: node (as specified by POSTGRES_USER=node in your .env file)
+
+Password: <yourPW> (whatever secure password you replaced <yourPW> with in your .env file)
+
+Port: 5432 (standard PostgreSQL port)
+
 ## ngrok Integration (Optional)
 
 For external access and OAuth callbacks, you can use ngrok tunneling.
