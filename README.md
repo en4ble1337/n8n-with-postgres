@@ -254,14 +254,13 @@ project/
 └── README.md
 ```
 
-```markdown
 # n8n Self-Hosting Best Practices: Internal DNS, NGINX Proxy, and Cloudflared
 
 A step-by-step quick tip for exposing n8n securely and reliably on your local network and the internet—using Cloudflared, pfSense/OPNsense DNS host overrides, and Nginx Proxy Manager.
 
-_Author: @en4ble1337_
+**Author:** @en4ble1337
 
-[Full guide here (nginx/ngnix + pfSense host overrides)](https://github.com/en4ble1337/ngnix-opnsense-cloudflare)
+**Full guide here:** [nginx/ngnix + pfSense host overrides](https://github.com/en4ble1337/ngnix-opnsense-cloudflare)
 
 ---
 
@@ -269,7 +268,7 @@ _Author: @en4ble1337_
 
 You want to:
 - Run n8n in Docker on your local server
-- Access it via a user-friendly domain (e.g. n8n.get1337.xyz) both **locally** (LAN) and **remotely** (WAN)
+- Access it via a user-friendly domain (e.g. `n8n.example.com`) both **locally (LAN)** and **remotely (WAN)**
 - Use secure HTTPS externally (via Cloudflared or NGINX Proxy Manager)
 - Avoid SSL errors, browser HSTS issues, and network confusion
 
@@ -279,48 +278,47 @@ You want to:
 
 ### 1. Always Use Universal Bind
 
-In docker-compose.yml for n8n:
-
+In `docker-compose.yml` for n8n:
 ```yaml
 environment:
-  - N8N_HOST=0.0.0.0  # Must-use for multi-network access!
-  - N8N_PROTOCOL=http  # n8n speaks HTTP to proxy
-  - WEBHOOK_URL=https://n8n.get1337.xyz/  # Tells n8n to advertise external HTTPS
+  N8N_HOST: 0.0.0.0  
+  N8N_PROTOCOL: http  
+  WEBHOOK_URL: https://n8n.example.com/  
   # other variables...
 ```
 
-- **Why:** Ensures n8n listens on all interfaces (LAN, localhost, Docker bridge, etc.), avoiding "can't access by domain" errors[web:1].
+**Why:** Ensures n8n listens on all interfaces (LAN, localhost, Docker bridge, etc.), avoiding "can't access by domain" errors.
 
 ---
 
 ### 2. Internal DNS Overrides for Seamless LAN Routing
 
 **On pfSense/OPNsense:**
-- Use DNS Host Overrides to map n8n.get1337.xyz ➔ Your n8n server's LAN IP (e.g. 10.1.20.148)
+- Use DNS Host Overrides to map `n8n.example.com` to your n8n server's LAN IP (e.g. `10.1.20.148`)
 - Ensures LAN clients hit the local server directly and avoid "hairpin NAT"/double-NAT loopbacks
 
 **Sample DNS Host Override Table:**
 
 | Host | Parent Domain of Host | IP Return For Host | Description |
-|------|----------------------|-------------------|---------------------|
-| n8n | get1337.xyz | 10.1.20.148 | n8n internal DNS |
+|------|----------------------|-------------------|-------------|
+| n8n  | example.com          | 10.1.20.148       | n8n internal DNS |
 
-- See real-world config screenshots and more guidance at [github.com/en4ble1337/ngnix-opnsense-cloudflare](https://github.com/en4ble1337/ngnix-opnsense-cloudflare)[web:1][attached_image:1].
+See real-world config screenshots and more guidance at [github.com/en4ble1337/ngnix-opnsense-cloudflare](https://github.com/en4ble1337/ngnix-opnsense-cloudflare)
 
 ---
 
 ### 3. Nginx Proxy Manager for Local HTTPS
 
-- Forward port 443 HTTPS traffic on n8n.get1337.xyz to n8n's HTTP port (e.g., 10.1.20.148:5678)
+- Forward port 443 HTTPS traffic on `n8n.example.com` to n8n's HTTP port (e.g., `10.1.20.148:5678`)
 - Use Let's Encrypt, wildcard, or your preferred cert for SSL in NPM
 - **Do NOT use Cloudflare-embedded certs unless subdomain matches**
 - "Force SSL" on in the proxy, let NPM handle certificate refresh and upgrades
 
 **Minimal Proxy Host Configuration:**
 
-| Domain Names | Scheme | Forward Host/IP | Forward Port | Cert | Force SSL | HSTS | Notes |
-|-------------------|--------|-----------------|-------------|----------|-----------|------|--------------|
-| n8n.get1337.xyz | http | 10.1.20.148 | 5678 | Let's Encrypt (or wildcard) | Yes | No | Do not use "Cloudflare Origin" unless wildcard! |
+| Domain Names      | Scheme | Forward Host/IP | Forward Port | Cert                      | Force SSL | HSTS | Notes                                          |
+|-------------------|--------|-----------------|--------------|---------------------------|-----------|------|------------------------------------------------|
+| n8n.example.com   | http   | 10.1.20.148     | 5678         | Let's Encrypt (or wildcard) | Yes       | No   | Do not use "Cloudflare Origin" unless wildcard! |
 
 *Screenshots in linked repo guide.*
 
@@ -328,27 +326,26 @@ environment:
 
 ### 4. Bonus: Troubleshooting Guide (Browser/Cache Issues)
 
-- If HTTPS fails **only on one device**:
-  - Clear your browser SSL state, cookies, and **HSTS settings** (see "chrome://net-internals/#hsts")
-  - Flush OS DNS and certificate caches
-  - Try incognito/private window
-  - Temporarily disable antivirus/proxy/VPN for further isolation
+If HTTPS fails **only on one device:**
+- Clear your browser SSL state, cookies, and **HSTS settings** (see `chrome://net-internals/#hsts`)
+- Flush OS DNS and certificate caches
+- Try incognito/private window
+- Temporarily disable antivirus/proxy/VPN for further isolation
 
 ---
 
 ## Full Reference & More Examples
 
-- See [https://github.com/en4ble1337/ngnix-opnsense-cloudflare](https://github.com/en4ble1337/ngnix-opnsense-cloudflare) for exhaustive screenshots, troubleshooting, and custom NGINX advanced tips.
+See [https://github.com/en4ble1337/ngnix-opnsense-cloudflare](https://github.com/en4ble1337/ngnix-opnsense-cloudflare) for exhaustive screenshots, troubleshooting, and custom NGINX advanced tips.
 
 ---
 
-### Key Takeaways
+## Key Takeaways
 
 - **Always set** `N8N_HOST=0.0.0.0` for Dockerized workloads where multi-network or proxy access is required
 - Leverage local DNS host overrides for hassle-free, hairpin-NAT-free local access
 - Use Nginx Proxy Manager or a similar reverse proxy for local HTTPS, configured with a matching certificate for every subdomain
 - Remember: Most "can't connect" problems are either proxy/cert mismatch, DNS confusion, or browser side-caching (including HSTS!)
-```
 
 
 ## Additional Resources
