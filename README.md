@@ -49,10 +49,16 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
   n8n:
     image: docker.n8n.io/n8nio/n8n:latest
     restart: always
+    container_name: n8n
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgres
@@ -62,8 +68,12 @@ services:
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
       - N8N_SECURE_COOKIE=false
-      - N8N_HOST=10.1.20.63 
-      - N8N_PROTOCOL=http    
+      - N8N_HOST=0.0.0.0 #on all interfaces
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://n8n.yourdomain.xyz/
+      - N8N_LOG_LEVEL=info
+      - N8N_LOG_OUTPUT=console
+      - N8N_PROXY_HOPS=1 #if behind proxy
     ports:
       - 5678:5678
     links:
@@ -72,7 +82,12 @@ services:
       - n8n_storage:/home/node/.n8n
     depends_on:
       - postgres
-
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
 volumes:
   db_storage:
   n8n_storage:
